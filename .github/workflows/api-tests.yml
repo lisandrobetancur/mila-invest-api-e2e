@@ -1,0 +1,135 @@
+name: API tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      api_ref:
+        description: Rama o tag de mila-invest-api contra el que correr
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Lo que se puede verificar sin la API: no depende de otro repo y siempre
+  # tiene que estar en verde.
+  estatico:
+    name: Lint y tipos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+  # Los escenarios necesitan la API levantada. Mientras `mila-invest-api` no
+  # publique su código, este job avisa y se saltea en vez de fallar: un rojo
+  # permanente por una dependencia que todavía no existe no le dice nada a nadie.
+  escenarios:
+    name: Escenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      BASE_URL: http://localhost:8000
+      # En el runner no hay otro PostgreSQL, pero se usa el mismo puerto que en
+      # local para que la configuración sea una sola.
+      DB_HOST_PORT: '5433'
+      DATABASE_URL: postgres://mila:mila@localhost:5433/mila
+      MILA_API_PATH: ../mila-invest-api
+
+    steps:
+      - name: Checkout de la suite
+        uses: actions/checkout@v4
+        with:
+          path: mila-invest-api-tests
+
+      - name: Checkout de la API
+        uses: actions/checkout@v4
+        with:
+          repository: lisandrobetancur/mila-invest-api
+          ref: ${{ github.event.inputs.api_ref || 'main' }}
+          path: mila-invest-api
+
+      # El contrato con la API son dos archivos: el compose que la levanta y el
+      # OpenAPI del que sale `contract.generated.ts`.
+      - name: ¿La API está publicada?
+        id: api
+        run: |
+          if [ -f mila-invest-api/docker-compose.yml ] && [ -f mila-invest-api/docs/openapi.json ]; then
+            echo "lista=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lista=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Escenarios omitidos::mila-invest-api@${{ github.event.inputs.api_ref || 'main' }} no tiene la API (falta docker-compose.yml o docs/openapi.json). Los escenarios no corrieron."
+          fi
+
+      # --- API bajo prueba -------------------------------------------------
+      # `--wait` espera los healthchecks del compose: la base (`pg_isready`) y
+      # la API (`/health`, después de `db:migrate` y `db:seed`).
+      - name: Levantar la base y la API
+        if: steps.api.outputs.lista == 'true'
+        working-directory: mila-invest-api
+        run: docker compose up --build --detach --wait --wait-timeout 300 db api
+
+      # --- Suite -----------------------------------------------------------
+      - uses: actions/setup-node@v4
+        if: steps.api.outputs.lista == 'true'
+        with:
+          node-version-file: mila-invest-api-tests/.nvmrc
+          cache: npm
+          cache-dependency-path: mila-invest-api-tests/package-lock.json
+
+      - name: Instalar dependencias
+        if: steps.api.outputs.lista == 'true'
+        working-directory: mila-invest-api-tests
+        run: npm ci
+
+      # Si la API cambió una ruta o un esquema, la suite se entera acá.
+      - name: Verificar el contrato
+        if: steps.api.outputs.lista == 'true'
+        working-directory: mila-invest-api-tests
+        run: npm run contract:check
+
+      - name: Correr la suite
+        if: steps.api.outputs.lista == 'true'
+        working-directory: mila-invest-api-tests
+        run: npm test
+
+      - name: Logs de la API
+        if: failure() && steps.api.outputs.lista == 'true'
+        working-directory: mila-invest-api
+        run: docker compose logs --no-color api | tail -n 300
+
+      # El reporte HTML lo genera la propia corrida, falle o no: no hay un paso
+      # aparte ni hace falta Java.
+      - name: Subir el reporte de Serenity/JS
+        if: always() && steps.api.outputs.lista == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-js-report
+          path: mila-invest-api-tests/reports/serenity-js
+          retention-days: 14
+
+      - name: Subir el reporte de Playwright
+        if: always() && steps.api.outputs.lista == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: mila-invest-api-tests/playwright-report
+          retention-days: 14
