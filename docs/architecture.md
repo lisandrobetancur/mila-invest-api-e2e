@@ -31,7 +31,7 @@ Cada flecha es "puede importar". Al revés, nunca. El lint lo hace cumplir en
 ### `src/config/env.ts`
 
 El **único** lugar que lee `process.env` (hay una regla de lint). `BASE_URL`,
-`DATABASE_URL`, `MILA_API_PATH`, `WORKERS` y los timeouts.
+`DATABASE_URL`, `MILA_API_PATH`, `WORKERS`, `REPORT_HISTORY` y los timeouts.
 
 ### `src/fixtures.ts`
 

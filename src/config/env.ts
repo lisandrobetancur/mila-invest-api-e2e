@@ -7,6 +7,7 @@
  * | `DATABASE_URL` | `postgres://mila:mila@localhost:5433/mila` | la base de la API (la del compose, **nunca** la del 5432) |
  * | `MILA_API_PATH` | `../mila-invest-api` | repo de la API, para `contract:sync` |
  * | `WORKERS` | la mitad de los núcleos | workers del proyecto paralelo |
+ * | `REPORT_HISTORY` | `5` | corridas que acumula el reporte de Serenity/JS (`1` = solo la última) |
  * | `CI` | ausente | activa un reintento y prohíbe `.only` |
  *
  * Un `.env` en la raíz del repo pisa los defaults (ver `.env.example`).
@@ -44,6 +45,13 @@ export const env = {
 
     /** Workers del proyecto paralelo; sin definir, decide Playwright. */
     workers: readOptionalNumber('WORKERS'),
+
+    /**
+     * Corridas que guarda el reporte de Serenity/JS (`maxHistory`). `1` muestra
+     * solo la última; con 5 o más el reporte puede clasificar la consistencia
+     * (flaky, degradado…), porque usa una ventana de cinco corridas.
+     */
+    reportHistory: readOptionalNumber('REPORT_HISTORY') ?? 5,
 
     /** `true` dentro de CI. */
     isCI: Boolean(process.env.CI),

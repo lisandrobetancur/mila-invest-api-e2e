@@ -55,6 +55,7 @@ Todo tiene default; un `.env` (ver `.env.example`) lo pisa.
 | `DATABASE_URL` | `postgres://mila:mila@localhost:5433/mila` |
 | `MILA_API_PATH` | `../mila-invest-api` |
 | `WORKERS` | lo decide Playwright |
+| `REPORT_HISTORY` | `5` |
 
 ## El reporte
 
@@ -62,6 +63,13 @@ Cada corrida deja `reports/serenity-js/index.html`, autocontenido: se abre
 con doble clic (`file://`) o con `npm run report`. Muestra capacidad →
 característica → escenario, con los pasos Dado/Cuando/Entonces y, debajo,
 cada petición y respuesta.
+
+El reporte acumula las últimas `REPORT_HISTORY` corridas (5 por defecto) para
+mostrar tendencias y pruebas inestables. Para ver solo la corrida actual:
+
+```sh
+REPORT_HISTORY=1 npm test; npm run report
+```
 
 ## Documentación
 

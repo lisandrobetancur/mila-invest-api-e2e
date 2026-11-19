@@ -45,10 +45,9 @@ export default defineConfig<SerenityFixtures, SerenityWorkerFixtures>({
                             outputDirectory: './reports/serenity-js',
                             specDirectory: './spec',
                             title: 'MILA Invest · API',
-                            // Sin límite guarda todas las corridas y `data.js` crece sin
-                            // parar. Cinco es la ventana con la que el reporte clasifica la
-                            // consistencia (flaky, degradado…). `npm run clean` lo reinicia.
-                            maxHistory: 5,
+                            // Cuántas corridas acumula (`REPORT_HISTORY`, 5 por defecto).
+                            // Sin límite `data.js` crece sin parar. `npm run clean` lo reinicia.
+                            maxHistory: env.reportHistory,
                         },
                     ],
                 ],
