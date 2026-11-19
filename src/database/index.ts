@@ -26,7 +26,7 @@ const crearCliente = (connectionString: string, applicationName: string): SqlCli
 };
 
 export const abrirBases = (workerIndex: number): Databases => ({
-    mila: crearCliente(env.databaseUrl, `mila-invest-api-tests-worker-${workerIndex}`),
+    mila: crearCliente(env.databaseUrl, `mila-invest-api-e2e-worker-${workerIndex}`),
 });
 
 export const cerrarBases = async (databases: Databases): Promise<void> => {

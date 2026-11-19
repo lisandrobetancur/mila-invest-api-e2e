@@ -1,5 +1,5 @@
 {
-  "name": "mila-invest-api-tests",
+  "name": "mila-invest-api-e2e",
   "version": "0.1.0",
   "private": true,
   "description": "Suite end-to-end de API de MILA Invest (Playwright Test + Serenity/JS Screenplay + verificación en base de datos)",

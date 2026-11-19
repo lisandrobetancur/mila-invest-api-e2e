@@ -1,4 +1,4 @@
-# mila-invest-api-tests
+# mila-invest-api-e2e
 
 Suite end-to-end **de API** de MILA Invest: Playwright Test como runner, el
 patrón Screenplay de Serenity/JS, el reporte HTML de Serenity/JS y
