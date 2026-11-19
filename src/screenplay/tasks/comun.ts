@@ -20,6 +20,14 @@ export const guardarLosTokens = (en: '' | 'tokens.' = ''): Activity[] => [
 ];
 
 /**
+ * Agrupa en un solo paso del reporte las notas de la sesión del actor (id,
+ * email, contraseña, tokens). Son notas en memoria, no peticiones: sin el
+ * grupo, cada una sale como un paso suelto "#actor takes notes: …".
+ */
+export const AnotarLaSesion = (...notasDeLaSesion: Activity[]): Task =>
+    Task.where('#actor anota su sesión', ...notasDeLaSesion);
+
+/**
  * La API rechazó la última petición con un código de error del contrato: el
  * estado es el que corresponde a ese código, el cuerpo es un `Problem` y el
  * tipo de contenido es `application/problem+json`.

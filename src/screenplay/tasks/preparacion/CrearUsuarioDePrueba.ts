@@ -5,7 +5,7 @@ import { Http } from '../../interactions/Http';
 import { notas } from '../../notes/NotasDeSesion';
 import { Secreto } from '../../notes/Secreto';
 import { Respuesta } from '../../questions/api';
-import { guardarLosTokens } from '../comun';
+import { AnotarLaSesion, guardarLosTokens } from '../comun';
 import { type Moneda, type Pais, unico } from './datos';
 
 interface Posicion {
@@ -67,10 +67,12 @@ export class CrearUsuarioDePrueba extends Task {
                 balances: this.saldos,
                 positions: [...this.posiciones],
             }),
-            notas().set('usuarioId', Respuesta.campo<string>('user.id')),
-            notas().set('email', Respuesta.campo<string>('user.email')),
-            notas().set('password', new Secreto(password)),
-            ...guardarLosTokens('tokens.'),
+            AnotarLaSesion(
+                notas().set('usuarioId', Respuesta.campo<string>('user.id')),
+                notas().set('email', Respuesta.campo<string>('user.email')),
+                notas().set('password', new Secreto(password)),
+                ...guardarLosTokens('tokens.'),
+            ),
         );
     }
 
